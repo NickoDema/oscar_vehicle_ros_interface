@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>oscar_vehicle_driver</name>
+  <version>1.0.0</version>
+  <description>
+      ROS-wrapper for oscar_vehicle_api
+  </description>
+
+  <author     email="ndema2301@gmail.com">Nikolay Dema</author>
+  <maintainer email="ndema2301@gamil.com">Nikolay Dema</maintainer>
+
+  <url type="website">https://gitlab.com/starline/oscar_vehicle_ros_interface</url>
+
+  <license>Apache, 2.0</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>message_generation</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <exec_depend>rospy</exec_depend>
+  <exec_depend>message_runtime</exec_depend>
+
+</package>

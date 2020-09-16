@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>oscar_teleop</name>
+  <version>1.0.0</version>
+  <description>The joy for oscar_vehicle_driver ros wrapper</description>
+
+  <author     email="ndema2301@gmail.com">Nikolay Dema</author>
+  <maintainer email="ndema2301@gamil.com">Nikolay Dema</maintainer>
+
+  <license>Apache License, Version 2.0</license>
+
+  <url type="website">https://gitlab.com/starline/oscar_vehicle_ros_interface</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <exec_depend>oscar_vehicle_driver</exec_depend>
+  <exec_depend>joy</exec_depend>
+
+</package>

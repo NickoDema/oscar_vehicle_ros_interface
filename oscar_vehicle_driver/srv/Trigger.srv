@@ -1,0 +1,5 @@
+---
+uint8 ERROR=0
+uint8 DONE=1
+uint8 result
+string why

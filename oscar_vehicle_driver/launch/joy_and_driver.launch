@@ -1,0 +1,7 @@
+<launch>
+
+  <include file="$(find oscar_vehicle_driver)/launch/driver.launch" />
+
+  <include file="$(find oscar_teleop)/launch/joy.launch" />
+
+</launch>
