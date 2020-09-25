@@ -27,7 +27,7 @@ from oscar_vehicle_api import create_vehicle_by_model
 from oscar_vehicle_driver.msg import *
 from oscar_vehicle_driver.srv import *
 
-VEHICLE_STATUS_PUB_RATE = 2
+VEHICLE_STATUS_PUB_RATE = 10
 VEHICLE_ODOM_PUB_RATE = 25
 
 
@@ -73,6 +73,9 @@ class OscarVehicleRosDriver:
         self.start_sending_vehicle_acceleration_srv = rospy.Service('oscar/start_sending_vehicle_move_cmds', Trigger, self.start_sending_vehicle_move_cmd_cb)
         self.stop_sending_vehicle_acceleration_srv  = rospy.Service('oscar/stop_sending_vehicle_move_cmds',  Trigger, self.stop_sending_vehicle_move_cmd_cb)
 
+        self.logger_start_srv = rospy.Service('oscar/logger_start', Trigger, self.logger_start_cb)
+        self.logger_stop_srv  = rospy.Service('oscar/logger_stop',  Trigger, self.logger_stop_cb)
+
         self.vehicle_status_pub   = rospy.Publisher("oscar/vehicle_status", VehicleStatus, queue_size = 1)
         self.vehicle_status_timer = rospy.Timer(rospy.Duration(1./VEHICLE_STATUS_PUB_RATE), self.vehicle_status_timer_cb)
 
@@ -85,6 +88,9 @@ class OscarVehicleRosDriver:
 
         vehicle_status_msg = VehicleStatus()
         vehicle_status_msg.mode = self.vehicle.get_mode()
+        # print("veh_speed:" + str(self.vehicle.get_vehicle_speed()))
+        # print("ws_pos_ve:" + str(self.vehicle.get_steering_wheel_angle_and_velocity()))
+        # print("ws_torque:" + str(self.vehicle.get_steering_wheel_and_eps_torques()))
         self.vehicle_status_pub.publish(vehicle_status_msg)
 
 
@@ -330,6 +336,28 @@ class OscarVehicleRosDriver:
 
         response = TriggerResponse()
         if self.vehicle.stop_sending_vehicle_move_cmd():
+            response.result = TriggerResponse.DONE
+        else:
+            response.result = TriggerResponse.ERROR
+            response.why = self.vehicle.error_report()
+        return response
+
+
+    def logger_start_cb(self, request):
+
+        response = TriggerResponse()
+        if self.vehicle.start_vehicle_logger():
+            response.result = TriggerResponse.DONE
+        else:
+            response.result = TriggerResponse.ERROR
+            response.why = self.vehicle.error_report()
+        return response
+
+
+    def logger_stop_cb(self, request):
+
+        response = TriggerResponse()
+        if self.vehicle.stop_vehicle_logger():
             response.result = TriggerResponse.DONE
         else:
             response.result = TriggerResponse.ERROR
