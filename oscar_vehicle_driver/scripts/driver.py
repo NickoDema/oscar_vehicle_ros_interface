@@ -52,6 +52,10 @@ class OscarVehicleRosDriver:
         self.emergency_stop_srv = rospy.Service('oscar/emergency_stop', Trigger, self.emergency_stop_cb)
         self.recover_srv        = rospy.Service('oscar/recover',        Trigger, self.recover_cb)
 
+        self.test_brake = False
+        self.test_brake_on_srv     = rospy.Service('oscar/test_brake_on',     Trigger, self.test_brake_on_cb)
+        self.test_brake_off_srv    = rospy.Service('oscar/test_brake_off',    Trigger, self.test_brake_off_cb)
+
         self.led_on_srv    = rospy.Service('oscar/led_on',    Trigger, self.led_on_cb)
         self.led_off_srv   = rospy.Service('oscar/led_off',   Trigger, self.led_off_cb)
         self.led_blink_srv = rospy.Service('oscar/led_blink', Trigger, self.led_blink_cb)
@@ -134,8 +138,37 @@ class OscarVehicleRosDriver:
             self.vehicle.stop_controller()
             self.raw_control_mode = True
 
-        self.vehicle.set_vehicle_throttle(msg.throttle)
+        if self.test_brake:
+            if (msg.throttle <= 0):
+                self.vehicle.set_vehicle_brake(msg.throttle)
+        else:
+            self.vehicle.set_vehicle_throttle(msg.throttle)
+
         self.vehicle.set_steering_wheel_torque(msg.steering_wheel_torque)
+
+
+    def test_brake_on_cb(self, request):
+
+        response = TriggerResponse()
+        if self.vehicle.test_brake_on():
+            print("TEST BRAKE ON")
+            response.result = TriggerResponse.DONE
+        else:
+            response.result = TriggerResponse.ERROR
+            response.why = self.vehicle.error_report()
+        return response
+
+
+    def test_brake_off_cb(self, request):
+
+        response = TriggerResponse()
+        if self.vehicle.test_brake_off():
+            print("TEST BRAKE OFF")
+            response.result = TriggerResponse.DONE
+        else:
+            response.result = TriggerResponse.ERROR
+            response.why = self.vehicle.error_report()
+        return response
 
 
     def auto_mode_cb(self, request):
