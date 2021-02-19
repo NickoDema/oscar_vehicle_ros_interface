@@ -141,16 +141,19 @@ class OscarVehicleRosDriver:
         if self.test_brake:
             if (msg.throttle <= 0):
                 self.vehicle.set_vehicle_brake(msg.throttle)
+                self.vehicle.set_vehicle_test_throttle(0)
+            else:
+                self.vehicle.set_vehicle_test_throttle(msg.throttle)
         else:
             self.vehicle.set_vehicle_throttle(msg.throttle)
-
         self.vehicle.set_steering_wheel_torque(msg.steering_wheel_torque)
 
 
     def test_brake_on_cb(self, request):
 
         response = TriggerResponse()
-        if self.vehicle.test_brake_on():
+        if self.vehicle.test_brake_on() and self.vehicle.test_throttle_on():
+            self.test_brake = True
             print("TEST BRAKE ON")
             response.result = TriggerResponse.DONE
         else:
@@ -162,7 +165,8 @@ class OscarVehicleRosDriver:
     def test_brake_off_cb(self, request):
 
         response = TriggerResponse()
-        if self.vehicle.test_brake_off():
+        if self.vehicle.test_brake_off() and self.vehicle.test_throttle_off():
+            self.test_brake = False
             print("TEST BRAKE OFF")
             response.result = TriggerResponse.DONE
         else:
