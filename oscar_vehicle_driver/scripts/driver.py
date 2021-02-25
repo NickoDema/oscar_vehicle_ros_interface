@@ -56,6 +56,9 @@ class OscarVehicleRosDriver:
         self.test_brake_on_srv     = rospy.Service('oscar/test_brake_on',     Trigger, self.test_brake_on_cb)
         self.test_brake_off_srv    = rospy.Service('oscar/test_brake_off',    Trigger, self.test_brake_off_cb)
 
+        self.forward_move_srv  = rospy.Service('oscar/forward_move',   Trigger, self.forward_move_cb)
+        self.backward_move_srv = rospy.Service('oscar/backward_move',  Trigger, self.backward_move_cb)
+
         self.led_on_srv    = rospy.Service('oscar/led_on',    Trigger, self.led_on_cb)
         self.led_off_srv   = rospy.Service('oscar/led_off',   Trigger, self.led_off_cb)
         self.led_blink_srv = rospy.Service('oscar/led_blink', Trigger, self.led_blink_cb)
@@ -147,6 +150,30 @@ class OscarVehicleRosDriver:
         else:
             self.vehicle.set_vehicle_throttle(msg.throttle)
         self.vehicle.set_steering_wheel_torque(msg.steering_wheel_torque)
+
+
+    def forward_move_cb(self, request):
+
+        response = TriggerResponse()
+        if self.vehicle.set_vehicle_forward_move():
+            print("FORWARD")
+            response.result = TriggerResponse.DONE
+        else:
+            response.result = TriggerResponse.ERROR
+            response.why = self.vehicle.error_report()
+        return response
+
+
+    def backward_move_cb(self, request):
+
+        response = TriggerResponse()
+        if self.vehicle.set_vehicle_backward_move():
+            print("REVERSE")
+            response.result = TriggerResponse.DONE
+        else:
+            response.result = TriggerResponse.ERROR
+            response.why = self.vehicle.error_report()
+        return response
 
 
     def test_brake_on_cb(self, request):

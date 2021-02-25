@@ -46,6 +46,10 @@ class OscarJoyTeleop:
         self.last_button_X = 0
         self.last_button_Y = 0
 
+        self.last_button_start = 0
+        self.last_button_back  = 0
+        self.direction = "FORWARD"
+
         self.last_stick_left_back  = 0
         self.last_stick_right_back = 0
         self.teleop_allowed = False
@@ -139,6 +143,18 @@ class OscarJoyTeleop:
             self.last_button_X = cur_button_X
 
 
+            # FORWARD / BACKWARD MOVEMENT
+            if ((self.last_button_start == 0) and (cur_button_start == 1)):
+                self.forward_move()
+                self.direction = "FORWARD"
+            self.last_button_start = cur_button_start
+
+            if ((self.last_button_back == 0) and (cur_button_back == 1)):
+                self.backward_move()
+                self.direction = "REVERSE"
+            self.last_button_back = cur_button_back
+
+
             # throttle
             if (cur_stick_left_back < -1.0):
                 self.throttle = cur_stick_left_back
@@ -208,6 +224,26 @@ class OscarJoyTeleop:
         try:
             rospy.wait_for_service('oscar/test_brake_off', WAIT_FOR_SERVICE_SERVER_TIMEOUT)
             call_service = rospy.ServiceProxy('oscar/test_brake_off', Trigger)
+            response = call_service()
+        except Exception as e:
+            print(e)
+
+
+    def forward_move(self):
+
+        try:
+            rospy.wait_for_service('oscar/forward_move', WAIT_FOR_SERVICE_SERVER_TIMEOUT)
+            call_service = rospy.ServiceProxy('oscar/forward_move', Trigger)
+            response = call_service()
+        except Exception as e:
+            print(e)
+
+
+    def backward_move(self):
+
+        try:
+            rospy.wait_for_service('oscar/backward_move', WAIT_FOR_SERVICE_SERVER_TIMEOUT)
+            call_service = rospy.ServiceProxy('oscar/backward_move', Trigger)
             response = call_service()
         except Exception as e:
             print(e)
@@ -312,14 +348,14 @@ class OscarJoyTeleop:
 
             screen.clear()
 
-            screen.addstr(0, 0, "--- HOW TO -------------------------------------------------------------")
-            screen.addstr(2, 2, "Push fully LT and RT triggers to start/stop to send commands")
+            screen.addstr(0, 0, "--- HOW TO ---------------------------------------------------------")
+            screen.addstr(2, 2, "Push fully LT and RT triggers to on/off joy")
             screen.addstr(3, 2, "RT trigger for throttle and LT trigger for brake")
             screen.addstr(4, 2, "Left stick for steering wheel torque")
             screen.addstr(5, 2, "B button for turning on/off emergency brake")
             screen.addstr(6, 2, "A button for switch auto/manual mode")
 
-            screen.addstr(8, 0, "--- STATE --------------------------------------------------------------")
+            screen.addstr(8, 0, "--- STATE ----------------------------------------------------------")
 
             screen.addstr(10, 2, "TELEOP")
             if self.teleop_allowed:
@@ -327,32 +363,36 @@ class OscarJoyTeleop:
             else:
                 screen.addstr(11, 2, "INACTIVE")
 
-            screen.addstr(10, 20, "MODE")
+            screen.addstr(10, 18, "MODE")
             if self.mode == "AUTO":
-                screen.addstr(11, 20, self.mode, curses.A_BOLD)
+                screen.addstr(11, 18, self.mode, curses.A_BOLD)
             else:
-                screen.addstr(11, 20, self.mode)
+                screen.addstr(11, 18, self.mode)
 
-            screen.addstr(10, 38, "EMERGENCY_BRAKE")
+            screen.addstr(10, 34, "EBRAKE")
             if self.emergency_stop_is_on:
-                screen.addstr(11, 38, "ON", curses.A_BOLD)
+                screen.addstr(11, 34, "ON", curses.A_BOLD)
             else:
-                screen.addstr(11, 38, "OFF")
+                screen.addstr(11, 34, "OFF")
 
-            screen.addstr(13, 0, "--- COMMANDS ----------------------------------------------------------")
+            screen.addstr(10, 48, "DIRECTION")
+            screen.addstr(11, 48, self.direction, curses.A_BOLD)
+
+
+            screen.addstr(13, 0, "--- COMMANDS ------------------------------------------------------")
 
             screen.addstr(15, 2, "THROTTLE")
             screen.addstr(16, 2, str(format(self.throttle, '.1f')), curses.A_BOLD)
 
-            screen.addstr(15, 20, "SW_TORQUE")
-            screen.addstr(15, 38, "SW Angle")
+            screen.addstr(15, 18, "SW_TORQUE")
+            screen.addstr(15, 34, "SW Angle")
 
             if self.steering_wheel_angle_control_active:
-                screen.addstr(16, 38, str(format(self.steering_wheel_angle, '.0f')), curses.A_BOLD)
-                screen.addstr(16, 20, "-")
+                screen.addstr(16, 34, str(format(self.steering_wheel_angle, '.0f')), curses.A_BOLD)
+                screen.addstr(16, 18, "-")
             else:
-                screen.addstr(16, 38, str(format(self.real_steering_wheel_angle, '.0f')))
-                screen.addstr(16, 20, str(format(self.steering_wheel_torque, '.1f')), curses.A_BOLD)
+                screen.addstr(16, 34, str(format(self.real_steering_wheel_angle, '.0f')))
+                screen.addstr(16, 18, str(format(self.steering_wheel_torque, '.1f')), curses.A_BOLD)
 
             screen.addstr(18, 1, "")
 
