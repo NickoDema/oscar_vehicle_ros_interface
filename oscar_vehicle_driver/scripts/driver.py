@@ -52,11 +52,12 @@ class OscarVehicleRosDriver:
         self.emergency_stop_srv = rospy.Service('oscar/emergency_stop', Trigger, self.emergency_stop_cb)
         self.recover_srv        = rospy.Service('oscar/recover',        Trigger, self.recover_cb)
 
-        self.test_brake = False
-        self.test_brake_on_srv     = rospy.Service('oscar/test_brake_on',     Trigger, self.test_brake_on_cb)
-        self.test_brake_off_srv    = rospy.Service('oscar/test_brake_off',    Trigger, self.test_brake_off_cb)
+        # self.test_brake = False
+        # self.test_brake_on_srv     = rospy.Service('oscar/test_brake_on',     Trigger, self.test_brake_on_cb)
+        # self.test_brake_off_srv    = rospy.Service('oscar/test_brake_off',    Trigger, self.test_brake_off_cb)
 
         self.forward_move_srv  = rospy.Service('oscar/forward_move',   Trigger, self.forward_move_cb)
+        self.cruise_move_srv   = rospy.Service('oscar/cruise_move',   Trigger, self.cruise_move_cb)
         self.backward_move_srv = rospy.Service('oscar/backward_move',  Trigger, self.backward_move_cb)
 
         self.led_on_srv    = rospy.Service('oscar/led_on',    Trigger, self.led_on_cb)
@@ -141,14 +142,14 @@ class OscarVehicleRosDriver:
             self.vehicle.stop_controller()
             self.raw_control_mode = True
 
-        if self.test_brake:
-            if (msg.throttle <= 0):
-                self.vehicle.set_vehicle_brake(msg.throttle)
-                self.vehicle.set_vehicle_test_throttle(0)
-            else:
-                self.vehicle.set_vehicle_test_throttle(msg.throttle)
-        else:
-            self.vehicle.set_vehicle_throttle(msg.throttle)
+        # if self.test_brake:
+        #     if (msg.throttle <= 0):
+        #         self.vehicle.set_vehicle_brake(msg.throttle)
+        #         self.vehicle.set_vehicle_test_throttle(0)
+        #     else:
+        #         self.vehicle.set_vehicle_test_throttle(msg.throttle)
+        # else:
+        self.vehicle.set_vehicle_throttle(msg.throttle)
         self.vehicle.set_steering_wheel_torque(msg.steering_wheel_torque)
 
 
@@ -157,6 +158,18 @@ class OscarVehicleRosDriver:
         response = TriggerResponse()
         if self.vehicle.set_vehicle_forward_move():
             print("FORWARD")
+            response.result = TriggerResponse.DONE
+        else:
+            response.result = TriggerResponse.ERROR
+            response.why = self.vehicle.error_report()
+        return response
+
+
+    def cruise_move_cb(self, request):
+
+        response = TriggerResponse()
+        if self.vehicle.set_vehicle_cruise_move():
+            print("CRUISE")
             response.result = TriggerResponse.DONE
         else:
             response.result = TriggerResponse.ERROR
@@ -176,30 +189,30 @@ class OscarVehicleRosDriver:
         return response
 
 
-    def test_brake_on_cb(self, request):
-
-        response = TriggerResponse()
-        if self.vehicle.test_brake_on() and self.vehicle.test_throttle_on():
-            self.test_brake = True
-            print("TEST BRAKE ON")
-            response.result = TriggerResponse.DONE
-        else:
-            response.result = TriggerResponse.ERROR
-            response.why = self.vehicle.error_report()
-        return response
-
-
-    def test_brake_off_cb(self, request):
-
-        response = TriggerResponse()
-        if self.vehicle.test_brake_off() and self.vehicle.test_throttle_off():
-            self.test_brake = False
-            print("TEST BRAKE OFF")
-            response.result = TriggerResponse.DONE
-        else:
-            response.result = TriggerResponse.ERROR
-            response.why = self.vehicle.error_report()
-        return response
+    # def test_brake_on_cb(self, request):
+    #
+    #     response = TriggerResponse()
+    #     if self.vehicle.test_brake_on() and self.vehicle.test_throttle_on():
+    #         self.test_brake = True
+    #         print("TEST BRAKE ON")
+    #         response.result = TriggerResponse.DONE
+    #     else:
+    #         response.result = TriggerResponse.ERROR
+    #         response.why = self.vehicle.error_report()
+    #     return response
+    #
+    #
+    # def test_brake_off_cb(self, request):
+    #
+    #     response = TriggerResponse()
+    #     if self.vehicle.test_brake_off() and self.vehicle.test_throttle_off():
+    #         self.test_brake = False
+    #         print("TEST BRAKE OFF")
+    #         response.result = TriggerResponse.DONE
+    #     else:
+    #         response.result = TriggerResponse.ERROR
+    #         response.why = self.vehicle.error_report()
+    #     return response
 
 
     def auto_mode_cb(self, request):

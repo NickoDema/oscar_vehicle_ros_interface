@@ -48,7 +48,8 @@ class OscarJoyTeleop:
 
         self.last_button_start = 0
         self.last_button_back  = 0
-        self.direction = "FORWARD"
+        self.direction = "CRUISE"
+        self.last_direction = ""
 
         self.last_stick_left_back  = 0
         self.last_stick_right_back = 0
@@ -134,23 +135,45 @@ class OscarJoyTeleop:
             self.last_button_logitech = cur_button_logitech
 
             # TEST BRAKE
-            if ((self.last_button_Y == 0) and (cur_button_Y == 1)):
-                self.test_brake_on()
-            self.last_button_Y = cur_button_Y
-
-            if ((self.last_button_X == 0) and (cur_button_X == 1)):
-                self.test_brake_off()
-            self.last_button_X = cur_button_X
+            # if ((self.last_button_Y == 0) and (cur_button_Y == 1)):
+            #     self.test_brake_on()
+            # self.last_button_Y = cur_button_Y
+            #
+            # if ((self.last_button_X == 0) and (cur_button_X == 1)):
+            #     self.test_brake_off()
+            # self.last_button_X = cur_button_X
 
 
             # FORWARD / BACKWARD MOVEMENT
             if ((self.last_button_start == 0) and (cur_button_start == 1)):
-                self.forward_move()
-                self.direction = "FORWARD"
+
+                if self.direction == "REVERSE":
+
+                    if self.last_direction == "CRUISE":
+                        self.cruise_move()
+                        self.direction = "CRUISE"
+
+                    else:
+                        self.forward_move()
+                        self.direction = "FORWARD"
+
+                    self.last_direction = "REVERSE"
+
+                elif self.direction == "CRUISE":
+                    self.last_direction = self.direction
+                    self.forward_move()
+                    self.direction = "FORWARD"
+
+                else:
+                    self.last_direction = self.direction
+                    self.cruise_move()
+                    self.direction = "CRUISE"
+
             self.last_button_start = cur_button_start
 
             if ((self.last_button_back == 0) and (cur_button_back == 1)):
                 self.backward_move()
+                self.last_direction = self.direction
                 self.direction = "REVERSE"
             self.last_button_back = cur_button_back
 
@@ -192,13 +215,16 @@ class OscarJoyTeleop:
                 self.vehicle_cmd_pub.publish(vehicle_cmd_msg)
             else:
                 vehicle_cmd_raw_msg = VehicleCmdRaw()
-                vehicle_cmd_raw_msg.steering_wheel_torque = self.steering_wheel_torque
+                self.steering_wheel_torque = self.steering_wheel_torque / 2
+                if self.direction != "CRUISE":
+                    self.throttle = self.throttle / 3
                 vehicle_cmd_raw_msg.throttle = self.throttle
+                vehicle_cmd_raw_msg.steering_wheel_torque = self.steering_wheel_torque
                 self.vehicle_cmd_raw_pub.publish(vehicle_cmd_raw_msg)
 
         # turn on/off joy
-        if (((self.last_stick_right_back <= 99.5) or (self.last_stick_left_back >= -99.5)) and
-            (cur_stick_right_back > 99.5) and (cur_stick_left_back < -99.5)):
+        if (((self.last_stick_right_back >= 99.5) and (self.last_stick_left_back <= -99.5)) and
+            ((cur_stick_right_back < 99.5) or (cur_stick_left_back > -99.5))):
 
             self.steering_wheel_torque = 0
             self.throttle = 0
@@ -209,24 +235,24 @@ class OscarJoyTeleop:
         self.last_stick_left_back  = cur_stick_left_back
 
 
-    def test_brake_on(self):
-
-        try:
-            rospy.wait_for_service('oscar/test_brake_on', WAIT_FOR_SERVICE_SERVER_TIMEOUT)
-            call_service = rospy.ServiceProxy('oscar/test_brake_on', Trigger)
-            response = call_service()
-        except Exception as e:
-            print(e)
-
-
-    def test_brake_off(self):
-
-        try:
-            rospy.wait_for_service('oscar/test_brake_off', WAIT_FOR_SERVICE_SERVER_TIMEOUT)
-            call_service = rospy.ServiceProxy('oscar/test_brake_off', Trigger)
-            response = call_service()
-        except Exception as e:
-            print(e)
+    # def test_brake_on(self):
+    #
+    #     try:
+    #         rospy.wait_for_service('oscar/test_brake_on', WAIT_FOR_SERVICE_SERVER_TIMEOUT)
+    #         call_service = rospy.ServiceProxy('oscar/test_brake_on', Trigger)
+    #         response = call_service()
+    #     except Exception as e:
+    #         print(e)
+    #
+    #
+    # def test_brake_off(self):
+    #
+    #     try:
+    #         rospy.wait_for_service('oscar/test_brake_off', WAIT_FOR_SERVICE_SERVER_TIMEOUT)
+    #         call_service = rospy.ServiceProxy('oscar/test_brake_off', Trigger)
+    #         response = call_service()
+    #     except Exception as e:
+    #         print(e)
 
 
     def forward_move(self):
@@ -244,6 +270,16 @@ class OscarJoyTeleop:
         try:
             rospy.wait_for_service('oscar/backward_move', WAIT_FOR_SERVICE_SERVER_TIMEOUT)
             call_service = rospy.ServiceProxy('oscar/backward_move', Trigger)
+            response = call_service()
+        except Exception as e:
+            print(e)
+
+
+    def cruise_move(self):
+
+        try:
+            rospy.wait_for_service('oscar/cruise_move', WAIT_FOR_SERVICE_SERVER_TIMEOUT)
+            call_service = rospy.ServiceProxy('oscar/cruise_move', Trigger)
             response = call_service()
         except Exception as e:
             print(e)
